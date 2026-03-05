@@ -1,4 +1,5 @@
 const API = (window.KLOUDY_API_BASE || '') + '/admin/api';
+const apiFetch = (url, opts = {}) => fetch(url, { ...opts, credentials: 'include' });
 
 function getTheme() {
   return localStorage.getItem('kloudy-theme') || 'light';
@@ -18,20 +19,12 @@ document.getElementById('theme-toggle')?.addEventListener('click', () => {
 
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
   try {
-    const res = await fetch(`${API}/auth/logout`, { method: 'POST', headers: { Accept: 'application/json' }, credentials: 'include' });
+    const res = await apiFetch(`${API}/auth/logout`, { method: 'POST', headers: { Accept: 'application/json' }, credentials: 'include' });
     const data = await res.json().catch(() => ({}));
     if (data.redirect) window.location.href = data.redirect;
-    else if (window.location.hostname.includes('github.io') && window.KLOUDY_LOGIN_URL) {
-      window.location.href = window.location.origin + window.KLOUDY_LOGIN_URL;
-    } else {
-      window.location.href = `http://${window.location.hostname}:9902`;
-    }
+    else window.location.href = `http://${window.location.hostname}:9902`;
   } catch (_) {
-    if (window.location.hostname.includes('github.io') && window.KLOUDY_LOGIN_URL) {
-      window.location.href = window.location.origin + window.KLOUDY_LOGIN_URL;
-    } else {
-      window.location.href = `http://${window.location.hostname}:9902`;
-    }
+    window.location.href = `http://${window.location.hostname}:9902`;
   }
 });
 
@@ -213,7 +206,22 @@ function closeHelpModal() {
 }
 
 async function loadChatCustomers(limit = 200) {
-  const res = await fetch(`${API}/customers?limit=${limit}`);
+  const url = `${API}/customers?limit=${limit}`;
+  // #region agent log
+  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3621a5'},body:JSON.stringify({sessionId:'3621a5',location:'app.js:loadChatCustomers',message:'Fetch start',data:{url,origin:location.origin},hypothesisId:'H1,H2,H4,H5',timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  let res;
+  try {
+    res = await fetch(url);
+    // #region agent log
+    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3621a5'},body:JSON.stringify({sessionId:'3621a5',location:'app.js:loadChatCustomers',message:'Fetch response',data:{url,status:res.status,ok:res.ok},hypothesisId:'H1,H3',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+  } catch (err) {
+    // #region agent log
+    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3621a5'},body:JSON.stringify({sessionId:'3621a5',location:'app.js:loadChatCustomers',message:'Fetch threw',data:{url,error:err?.message},hypothesisId:'H2',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    throw err;
+  }
   const customers = await res.json().catch(() => []);
   chatCustomersCache = Array.isArray(customers) ? customers : [];
   const sel = document.getElementById('chat-customer-context');
@@ -228,16 +236,24 @@ async function loadChatCustomers(limit = 200) {
 
 async function loadChatHistory() {
   try {
-    const res = await fetch(`${API}/chat/history?limit=50`);
-    chatHistory = await res.json();
+    const res = await apiFetch(`${API}/chat/history?limit=50`);
+    const data = await res.json();
+    chatHistory = Array.isArray(data) ? data : [];
+    if (!res.ok && data?.error) {
+      if (res.status === 401) window.location.href = window.KLOUDY_LOGIN_URL || '/';
+      return;
+    }
     renderMessages(chatHistory);
   } catch (e) {
     console.error('Load history:', e);
+    chatHistory = [];
+    renderMessages([]);
   }
 }
 
 function renderMessages(messages) {
   chatMessages.innerHTML = '';
+  if (!Array.isArray(messages)) return;
   messages.forEach((m) => {
     const div = document.createElement('div');
     div.className = `message ${m.role}`;
@@ -332,7 +348,7 @@ async function uploadPastedScreenshotToCustomer(file, customerId, notes) {
   const form = new FormData();
   form.append('file', file);
   if (notes) form.append('notes', notes);
-  const res = await fetch(`${API}/documents/${customerId}`, { method: 'POST', body: form });
+  const res = await apiFetch(`${API}/documents/${customerId}`, { method: 'POST', body: form });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Upload failed');
   return data;
@@ -356,7 +372,7 @@ async function sendMessage() {
   thinkingDiv.id = 'thinking-indicator';
   thinkingDiv.innerHTML = `
     <div class="thinking-avatar">
-      <img src="/images/KloudyCareLogos.png" alt="KloudyCare" class="thinking-emoticon">
+      <img src="images/KloudyCareLogos.png" alt="KloudyCare" class="thinking-emoticon">
     </div>
     <div class="thinking-body">
       <span class="message-role">Assistant</span>
@@ -377,7 +393,7 @@ async function sendMessage() {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const eligibilityContext = typeof window.getLastEligibilityResult === 'function' ? window.getLastEligibilityResult() : null;
-    const res = await fetch(`${API}/chat?stream=1`, {
+    const res = await apiFetch(`${API}/chat?stream=1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
       body: JSON.stringify({
@@ -494,7 +510,7 @@ async function sendMessage() {
         confirmBtn.disabled = true;
         confirmBtn.textContent = 'Sending...';
         try {
-          const r = await fetch(`${API}/email/send`, {
+          const r = await apiFetch(`${API}/email/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -869,7 +885,7 @@ function openActionPIP(actionId, customer, extraOptions) {
         genBtn.disabled = true;
         genBtn.textContent = 'Generating...';
         try {
-          const r = await fetch(`${API}/email/generate`, {
+          const r = await apiFetch(`${API}/email/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ template_type: templateType, customer_id: custId }),
@@ -911,7 +927,7 @@ function openActionPIP(actionId, customer, extraOptions) {
         sendBtn.disabled = true;
         sendBtn.textContent = 'Sending...';
         try {
-          const r = await fetch(`${API}/email/send`, {
+          const r = await apiFetch(`${API}/email/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -991,7 +1007,7 @@ function openActionPIP(actionId, customer, extraOptions) {
       btn.disabled = true;
       btn.textContent = 'Sending...';
       try {
-        const r = await fetch(`${API}/openemr/patient/${pid}/message`, {
+        const r = await apiFetch(`${API}/openemr/patient/${pid}/message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ body, title, from: 'Kloudy', to: 'admin', groupname: 'Default', message_status: 'New' }),
@@ -1020,7 +1036,7 @@ function openActionPIP(actionId, customer, extraOptions) {
     (async () => {
       let users = [];
       try {
-        const r = await fetch(`${API}/reminders/users`);
+        const r = await apiFetch(`${API}/reminders/users`);
         const data = await parseJsonResponse(r);
         users = data.users || [];
       } catch (_) {}
@@ -1101,7 +1117,7 @@ function openActionPIP(actionId, customer, extraOptions) {
         btn.disabled = true;
         btn.textContent = 'Scheduling...';
         try {
-          const r = await fetch(`${API}/reminders`, {
+          const r = await apiFetch(`${API}/reminders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1185,7 +1201,7 @@ function openActionPIP(actionId, customer, extraOptions) {
         btn.disabled = true;
         btn.textContent = 'Creating...';
         try {
-          const r = await fetch(`${API}/telehealth/quick-call`, {
+          const r = await apiFetch(`${API}/telehealth/quick-call`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: quickName, email: quickEmail, send_invite_email: sendInviteEmail }),
@@ -1228,7 +1244,7 @@ function openActionPIP(actionId, customer, extraOptions) {
         btn.disabled = true;
         btn.textContent = 'Creating...';
         try {
-          const r = await fetch(`${API}/telehealth/appointment`, {
+          const r = await apiFetch(`${API}/telehealth/appointment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ customer_id: custId, send_invite_email: sendInviteEmail }),
@@ -1292,7 +1308,7 @@ async function refreshNotificationCount() {
   const dot = document.getElementById('notification-dot');
   if (!dot) return;
   try {
-    const r = await fetch(`${API}/notifications/unread-count`);
+    const r = await apiFetch(`${API}/notifications/unread-count`);
     const data = await parseJsonResponse(r).catch(() => ({ count: 0 }));
     dot.style.display = (data.count || 0) > 0 ? 'block' : 'none';
   } catch (_) {
@@ -1307,7 +1323,7 @@ async function refreshMessageCenterIfOpen() {
   const footerEl = document.getElementById('action-pip-footer');
   if (!pip || pip.style.display !== 'flex' || titleEl?.textContent !== 'Message Center' || !bodyEl || !footerEl || messageCenterView !== 'list') return;
   try {
-    const r = await fetch(`${API}/notifications`);
+    const r = await apiFetch(`${API}/notifications`);
     const data = await parseJsonResponse(r);
     messageCenterItems = data.items || [];
     const emails = messageCenterItems.filter((i) => i.type === 'email');
@@ -1337,8 +1353,8 @@ async function openMessageCenterPIP() {
   messageCenterView = 'list';
   try {
     const [notifRes, autoRes] = await Promise.all([
-      fetch(`${API}/notifications`),
-      fetch(`${API}/notifications/auto-mode`),
+      apiFetch(`${API}/notifications`),
+      apiFetch(`${API}/notifications/auto-mode`),
     ]);
     const data = await parseJsonResponse(notifRes);
     const autoData = await parseJsonResponse(autoRes).catch(() => ({ enabled: false }));
@@ -1353,7 +1369,7 @@ async function openMessageCenterPIP() {
       item_id: i.item_id,
     }));
     if (toMark.length) {
-      await fetch(`${API}/notifications/seen`, {
+      await apiFetch(`${API}/notifications/seen`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: toMark }),
@@ -1376,7 +1392,7 @@ async function processAutoModeMessages(items) {
   );
   for (const it of processable.slice(0, 5)) {
     try {
-      await fetch(`${API}/notifications/auto-respond`, {
+      await apiFetch(`${API}/notifications/auto-respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ item_type: it.type, item_id: it.item_id }),
@@ -1384,7 +1400,7 @@ async function processAutoModeMessages(items) {
     } catch (_) {}
   }
   try {
-    const r = await fetch(`${API}/notifications`);
+    const r = await apiFetch(`${API}/notifications`);
     const data = await parseJsonResponse(r);
     messageCenterItems = data.items || [];
     const emails = messageCenterItems.filter((i) => i.type === 'email');
@@ -1402,7 +1418,7 @@ async function processAutoModeMessages(items) {
 
 async function toggleAutoMode() {
   try {
-    await fetch(`${API}/notifications/auto-mode`, {
+    await apiFetch(`${API}/notifications/auto-mode`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: autoModeEnabled }),
@@ -1489,7 +1505,7 @@ function renderMessageCenterList(bodyEl, footerEl, emails, incomingEmails, calls
 function showMessageDetail(bodyEl, footerEl, item) {
   messageCenterView = 'detail';
   if (item.needs_human && item.item_id) {
-    fetch(`${API}/notifications/clear-needs-human`, {
+    apiFetch(`${API}/notifications/clear-needs-human`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ item_type: item.type, item_id: item.item_id }),
@@ -1646,7 +1662,7 @@ function showMessageDetail(bodyEl, footerEl, item) {
     btn.disabled = true;
     btn.textContent = 'Processing...';
     try {
-      const r = await fetch(`${API}/notifications/auto-respond`, {
+      const r = await apiFetch(`${API}/notifications/auto-respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ item_type: item.type, item_id: item.item_id }),
@@ -1672,8 +1688,8 @@ function showMessageDetail(bodyEl, footerEl, item) {
   footerEl.querySelector('#msg-center-reminder-dismiss')?.addEventListener('click', async () => {
     if (item.type !== 'reminder' || !item.id) return;
     try {
-      await fetch(`${API}/reminders/${item.id}/seen`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      await fetch(`${API}/notifications/seen`, {
+      await apiFetch(`${API}/reminders/${item.id}/seen`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      await apiFetch(`${API}/notifications/seen`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ item_type: 'reminder', item_id: item.item_id }),
@@ -1883,7 +1899,7 @@ async function openUploadModal(pastedFiles = []) {
   const chatSel = document.getElementById('chat-customer-context');
   const drop = document.getElementById('upload-modal-drop');
   if (!modal || !sel) return;
-  const res = await fetch(`${API}/customers?limit=100`);
+  const res = await apiFetch(`${API}/customers?limit=100`);
   const customers = await res.json().catch(() => []);
   sel.innerHTML = '<option value="">Select a customer...</option>';
   (customers.slice ? customers : []).forEach((c) => {
@@ -1918,7 +1934,7 @@ async function loadUploadModalDocs() {
   list.innerHTML = '';
   if (!customerId) return;
   try {
-    const res = await fetch(`${API}/documents/${customerId}`);
+    const res = await apiFetch(`${API}/documents/${customerId}`);
     const docs = await res.json();
     docs.forEach((d) => {
       const li = document.createElement('li');
@@ -2003,7 +2019,7 @@ async function uploadDocsFromModal(files) {
       const form = new FormData();
       form.append('file', file);
       if (notes) form.append('notes', notes);
-      const res = await fetch(`${API}/documents/${customerId}`, { method: 'POST', body: form });
+      const res = await apiFetch(`${API}/documents/${customerId}`, { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       okCount++;
@@ -2095,7 +2111,7 @@ document.getElementById('btn-eligibility')?.addEventListener('click', async () =
   const isStandalone = ['9900', '9990'].includes(window.location.port);
   const eligUrl = isStandalone ? `http://${window.location.hostname}:9933/` : '/eligibility/';
   try {
-    const startRes = await fetch(`${API}/eligibility/start-app`, { method: 'POST' }).catch(() => null);
+    const startRes = await apiFetch(`${API}/eligibility/start-app`, { method: 'POST' }).catch(() => null);
     const data = startRes?.ok ? await startRes.json().catch(() => ({})) : {};
     if (data.message === 'Eligibility app starting...') {
       await new Promise(r => setTimeout(r, 3000));
@@ -2128,7 +2144,7 @@ document.getElementById('btn-chat')?.addEventListener('click', () => {
 
 async function exportChatContextToDrive(content) {
   try {
-    const res = await fetch(`${API}/export/chat-context`, {
+    const res = await apiFetch(`${API}/export/chat-context`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
@@ -2152,7 +2168,7 @@ async function exportChatContextToDrive(content) {
 async function addCallNoteFromText(text, customerId) {
   if (!customerId) return;
   try {
-    const res = await fetch(`${API}/customers/${customerId}/notes/from-chat`, {
+    const res = await apiFetch(`${API}/customers/${customerId}/notes/from-chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
@@ -2175,7 +2191,7 @@ async function addCallNoteFromText(text, customerId) {
 
 async function createProfileFromText(text) {
   try {
-    const res = await fetch(`${API}/customers/from-chat`, {
+    const res = await apiFetch(`${API}/customers/from-chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
@@ -2282,13 +2298,13 @@ async function sendExpandModalMessage() {
 
   const thinkingBlock = document.createElement('div');
   thinkingBlock.className = 'expand-modal-q expand-modal-thinking';
-  thinkingBlock.innerHTML = '<span class="expand-modal-thinking-inner"><img src="/images/KloudyCareLogos.png" alt="KloudyCare" class="thinking-emoticon" onerror="this.style.display=\'none\'"><span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></span>';
+  thinkingBlock.innerHTML = '<span class="expand-modal-thinking-inner"><img src="images/KloudyCareLogos.png" alt="KloudyCare" class="thinking-emoticon" onerror="this.style.display=\'none\'"><span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></span>';
   body.appendChild(thinkingBlock);
   body.scrollTop = body.scrollHeight;
 
   try {
     const eligibilityContext = typeof window.getLastEligibilityResult === 'function' ? window.getLastEligibilityResult() : null;
-    const res = await fetch(`${API}/chat?stream=1`, {
+    const res = await apiFetch(`${API}/chat?stream=1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
       body: JSON.stringify({

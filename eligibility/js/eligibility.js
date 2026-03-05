@@ -1,5 +1,6 @@
 const ELIG_API = (window.KLOUDY_API_BASE || '') + (window.location.pathname.includes('eligibility') ? '/eligibility/api' : '/api');
 const BACKEND_API = (window.KLOUDY_API_BASE || '') + '/admin/api';
+const credFetch = (url, opts = {}) => fetch(url, { ...opts, credentials: 'include' });
 const isStandalone = window.location.port === '9933';
 const ADMIN_URL = (window.KLOUDY_API_BASE || '') + '/admin';
 const OPENEMR_URL = (window.KLOUDY_API_BASE || '') + '/openemr';
@@ -86,7 +87,7 @@ document.getElementById('eligibility-form')?.addEventListener('submit', async (e
   setStatus('Checking eligibility...', 'loading');
 
   try {
-    const res = await fetch(`${ELIG_API}/eligibility/check`, {
+    const res = await credFetch(`${ELIG_API}/eligibility/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -125,7 +126,7 @@ document.getElementById('eligibility-form')?.addEventListener('submit', async (e
 
 async function ensureEligibilityAppRunning() {
   try {
-    const res = await fetch(`${BACKEND_API}/eligibility/start-app`, { method: 'POST' });
+    const res = await credFetch(`${BACKEND_API}/eligibility/start-app`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
     if (data.success && data.message === 'Eligibility app starting...') {
       await new Promise(r => setTimeout(r, 3000));
@@ -140,7 +141,7 @@ async function openPortalForManualCheck() {
   if (btn) btn.disabled = true;
   if (btnResults) btnResults.disabled = true;
   try {
-    let res = await fetch(`${ELIG_API}/eligibility/open-portal`, { method: 'POST' });
+    let res = await credFetch(`${ELIG_API}/eligibility/open-portal`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
     if (data.success) {
       setStatus('Browser opened on Eligibility page. Enter patient data and submit.');
@@ -152,7 +153,7 @@ async function openPortalForManualCheck() {
     setStatus('Starting eligibility app...', 'loading');
     await ensureEligibilityAppRunning();
     try {
-      const retry = await fetch(`${ELIG_API}/eligibility/open-portal`, { method: 'POST' });
+      const retry = await credFetch(`${ELIG_API}/eligibility/open-portal`, { method: 'POST' });
       const data = await retry.json().catch(() => ({}));
       if (data.success) {
         setStatus('Browser opened on Eligibility page. Enter patient data and submit.');
@@ -201,7 +202,7 @@ document.getElementById('btn-openemr')?.addEventListener('click', () => {
 
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
   try {
-    const res = await fetch(`${BACKEND_API}/auth/logout`, { method: 'POST', headers: { Accept: 'application/json' }, credentials: 'include' });
+    const res = await credFetch(`${BACKEND_API}/auth/logout`, { method: 'POST', headers: { Accept: 'application/json' }, credentials: 'include' });
     const data = await res.json().catch(() => ({}));
     const loginUrl = data.redirect || (isStandalone ? `http://${window.location.hostname}:9902` : '/');
     window.location.href = loginUrl;
@@ -251,7 +252,7 @@ async function fetchAndShowTotpCode(retryAfterStart = false) {
   if (!display) return;
   const prevCode = display.textContent;
   try {
-    const res = await fetch(`${ELIG_API}/eligibility/totp`);
+    const res = await credFetch(`${ELIG_API}/eligibility/totp`);
     const data = await res.json().catch(() => ({}));
     if (data.success && data.code) {
       display.textContent = data.code;

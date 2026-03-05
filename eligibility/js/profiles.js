@@ -6,7 +6,7 @@ async function loadProfiles() {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (profileFilter === 'awaiting') params.set('needs_contact', '1');
-  const res = await fetch(`${API}/customers?${params}`);
+  const res = await apiFetch(`${API}/customers?${params}`);
   const customers = await res.json();
   const list = document.getElementById('profile-list');
   list.innerHTML = '';
@@ -56,7 +56,7 @@ function escapeHtml(s) {
 
 async function showProfile(id) {
   currentCustomerId = id;
-  const res = await fetch(`${API}/customers/${id}`);
+  const res = await apiFetch(`${API}/customers/${id}`);
   const c = await res.json();
   if (!res.ok) return;
 
@@ -146,7 +146,7 @@ async function showProfile(id) {
   });
   detail.querySelector('#btn-delete-profile').addEventListener('click', deleteProfile);
   detail.querySelector('#edit-active').addEventListener('change', (e) => {
-    fetch(`${API}/customers/${currentCustomerId}`, {
+    apiFetch(`${API}/customers/${currentCustomerId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: e.target.checked ? 1 : 0 }),
@@ -179,7 +179,7 @@ async function toggleMessagesSection(customerId) {
     section.style.display = 'block';
     list.innerHTML = '<li class="messages-loading">Loading...</li>';
     try {
-      const res = await fetch(`${API}/email/sent?customer_id=${customerId}`);
+      const res = await apiFetch(`${API}/email/sent?customer_id=${customerId}`);
       const messages = await res.json();
       list.innerHTML = '';
       if (!messages.length) {
@@ -207,7 +207,7 @@ async function toggleMessagesSection(customerId) {
 
 async function deleteProfile() {
   if (!confirm('Permanently delete this profile and all notes/documents?')) return;
-  const res = await fetch(`${API}/customers/${currentCustomerId}`, { method: 'DELETE' });
+  const res = await apiFetch(`${API}/customers/${currentCustomerId}`, { method: 'DELETE' });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     alert('Delete failed: ' + (err.error || res.statusText));
@@ -238,7 +238,7 @@ let processStepsConfig = null;
 async function getProcessSteps() {
   if (processStepsConfig) return processStepsConfig;
   try {
-    const res = await fetch(`${API}/process-steps`);
+    const res = await apiFetch(`${API}/process-steps`);
     if (res.ok) {
       processStepsConfig = await res.json();
       return processStepsConfig;
@@ -300,7 +300,7 @@ async function saveProfile() {
     profile_type: document.getElementById('edit-profile-type').value,
     is_active: document.getElementById('edit-active').checked ? 1 : 0,
   };
-  const res = await fetch(`${API}/customers/${currentCustomerId}`, {
+  const res = await apiFetch(`${API}/customers/${currentCustomerId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -314,7 +314,7 @@ async function saveProfile() {
 }
 
 async function loadDocs(customerId) {
-  const res = await fetch(`${API}/documents/${customerId}`);
+  const res = await apiFetch(`${API}/documents/${customerId}`);
   const docs = await res.json();
   const ul = document.getElementById('doc-list');
   ul.innerHTML = '';
@@ -332,7 +332,7 @@ async function uploadDocs(files) {
   for (const file of files) {
     const form = new FormData();
     form.append('file', file);
-    await fetch(`${API}/documents/${currentCustomerId}`, {
+    await apiFetch(`${API}/documents/${currentCustomerId}`, {
       method: 'POST',
       body: form,
     });
@@ -343,7 +343,7 @@ async function uploadDocs(files) {
 document.getElementById('btn-new-profile')?.addEventListener('click', () => {
   const name = prompt('Full name for new customer:');
   if (!name) return;
-  fetch(`${API}/customers`, {
+  apiFetch(`${API}/customers`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ full_name: name }),
@@ -361,7 +361,7 @@ document.getElementById('btn-sync-openemr')?.addEventListener('click', async () 
   btn.disabled = true;
   btn.textContent = 'Syncing...';
   try {
-    const r = await fetch(`${API}/openemr/sync-profiles`, { method: 'POST' });
+    const r = await apiFetch(`${API}/openemr/sync-profiles`, { method: 'POST' });
     const data = await r.json();
     if (r.ok) {
       const msg = data.failed > 0
@@ -401,7 +401,7 @@ async function openNotesPopup(customerId, profileType) {
   editingNoteId = null;
   if (!profileType) {
     try {
-      const r = await fetch(`${API}/customers/${customerId}`);
+      const r = await apiFetch(`${API}/customers/${customerId}`);
       const c = await r.json();
       profileType = c.profile_type === 'caregiver' ? 'caregiver' : 'client';
     } catch (_) {}
@@ -457,7 +457,7 @@ function startEditNote(n) {
 
 async function deleteNote(noteId) {
   if (!confirm('Delete this note?')) return;
-  const res = await fetch(`${API}/customers/${notesCustomerId}/notes/${noteId}`, { method: 'DELETE' });
+  const res = await apiFetch(`${API}/customers/${notesCustomerId}/notes/${noteId}`, { method: 'DELETE' });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     alert(data.error || 'Delete failed');
@@ -474,7 +474,7 @@ async function deleteNote(noteId) {
   loadNotesList();
   const detail = document.getElementById('profile-detail');
   if (detail && detail.style.display !== 'none') {
-    const r = await fetch(`${API}/customers/${notesCustomerId}`);
+    const r = await apiFetch(`${API}/customers/${notesCustomerId}`);
     const c = await r.json();
     if (c.current_process_step != null) {
       renderProcessProgress(notesProfileType, c.current_process_step, detail.querySelector('#process-progress-section'));
@@ -483,7 +483,7 @@ async function deleteNote(noteId) {
 }
 
 async function loadNotesList() {
-  const res = await fetch(`${API}/customers/${notesCustomerId}/notes`);
+  const res = await apiFetch(`${API}/customers/${notesCustomerId}/notes`);
   const notes = await res.json();
   const list = document.getElementById('notes-list');
   list.innerHTML = '';
@@ -517,7 +517,7 @@ document.getElementById('btn-add-note')?.addEventListener('click', async () => {
   const disposition = dispSel.value ? (dispSel.options[dispSel.selectedIndex]?.text || '') : '';
   const notes = document.getElementById('note-body').value.trim();
   if (editingNoteId) {
-    const res = await fetch(`${API}/customers/${notesCustomerId}/notes/${editingNoteId}`, {
+    const res = await apiFetch(`${API}/customers/${notesCustomerId}/notes/${editingNoteId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ call_reason: callReason, disposition, notes, process_step: processStep }),
@@ -530,7 +530,7 @@ document.getElementById('btn-add-note')?.addEventListener('click', async () => {
     editingNoteId = null;
     document.getElementById('btn-add-note').textContent = 'Add Note';
   } else {
-    await fetch(`${API}/customers/${notesCustomerId}/notes`, {
+    await apiFetch(`${API}/customers/${notesCustomerId}/notes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ call_reason: callReason, disposition, notes, process_step: processStep }),
@@ -544,7 +544,7 @@ document.getElementById('btn-add-note')?.addEventListener('click', async () => {
   loadNotesList();
   const detail = document.getElementById('profile-detail');
   if (detail.style.display !== 'none') {
-    const res = await fetch(`${API}/customers/${notesCustomerId}`);
+    const res = await apiFetch(`${API}/customers/${notesCustomerId}`);
     const c = await res.json();
     if (c.current_process_step != null) {
       renderProcessProgress(notesProfileType, c.current_process_step, detail.querySelector('#process-progress-section'));
@@ -568,9 +568,9 @@ function getPastedImageFromEvent(e) {
 document.getElementById('btn-ai-suggest')?.addEventListener('click', async () => {
   const noteBody = document.getElementById('note-body').value.trim();
   const container = document.getElementById('ai-suggestions');
-  container.innerHTML = '<span class="ai-suggestions-thinking"><img src="/images/KloudyCareLogos.png" alt="" class="thinking-emoticon" onerror="this.style.display=\'none\'"><span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></span>';
+  container.innerHTML = '<span class="ai-suggestions-thinking"><img src="images/KloudyCareLogos.png" alt="" class="thinking-emoticon" onerror="this.style.display=\'none\'"><span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></span>';
   try {
-    const res = await fetch(`${API}/customers/${notesCustomerId}/notes/suggest-questions`, {
+    const res = await apiFetch(`${API}/customers/${notesCustomerId}/notes/suggest-questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: noteBody }),
@@ -593,7 +593,7 @@ document.getElementById('btn-ai-suggest')?.addEventListener('click', async () =>
       const form = new FormData();
       form.append('file', file);
       form.append('notes', 'Screenshot from call notes');
-      await fetch(`${API}/documents/${notesCustomerId}`, { method: 'POST', body: form });
+      await apiFetch(`${API}/documents/${notesCustomerId}`, { method: 'POST', body: form });
       document.getElementById('note-body').value = (document.getElementById('note-body').value || '') + ' [Screenshot attached]';
     } catch (err) {
       console.error('Screenshot upload failed:', err);

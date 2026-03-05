@@ -117,7 +117,7 @@ async function loadChatHistory() {
   try {
     const res = await fetchWithCreds(`${API}/chat/history?limit=50`);
     if (res.status === 401) {
-      window.location.href = window.KLOUDY_LOGIN_URL || "/";
+      window.location.href = '/';
       return;
     }
     const data = await res.json();
@@ -203,7 +203,7 @@ async function sendMessage() {
       }),
     });
     if (res.status === 401) {
-      window.location.href = window.KLOUDY_LOGIN_URL || "/";
+      window.location.href = '/';
       return;
     }
 
