@@ -26,9 +26,10 @@ async function redirectByRole(user) {
   if (role === 'admin' && adminApproved) {
     const host = window.location.hostname;
     const isPublicDomain = host === 'kloudykare.com' || host === 'www.kloudykare.com';
+    const isGitHubPages = host.includes('github.io');
     const targetUrl = isPublicDomain ? '/admin' : (BASE ? BASE + '/admin' : 'http://' + host + ':9900/admin');
     // Verify backend accepts our session before redirecting (avoids redirect loop when session stores differ)
-    const adminConfigUrl = isPublicDomain ? '/admin/api/config' : (BASE ? BASE + '/admin/api/config' : 'http://' + host + ':9900/admin/api/config');
+    const adminConfigUrl = isPublicDomain ? '/admin/api/config' : (isGitHubPages ? (window.KLOUDY_API_BASE || '') + '/admin/api/config' : (BASE ? BASE + '/admin/api/config' : 'http://' + host + ':9900/admin/api/config'));
     const configRes = await fetchWithCreds(adminConfigUrl);
     if (!configRes.ok) {
       await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });

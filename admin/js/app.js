@@ -21,9 +21,17 @@ document.getElementById('btn-logout')?.addEventListener('click', async () => {
     const res = await fetch(`${API}/auth/logout`, { method: 'POST', headers: { Accept: 'application/json' }, credentials: 'include' });
     const data = await res.json().catch(() => ({}));
     if (data.redirect) window.location.href = data.redirect;
-    else window.location.href = `http://${window.location.hostname}:9902`;
+    else if (window.location.hostname.includes('github.io') && window.KLOUDY_LOGIN_URL) {
+      window.location.href = window.location.origin + window.KLOUDY_LOGIN_URL;
+    } else {
+      window.location.href = `http://${window.location.hostname}:9902`;
+    }
   } catch (_) {
-    window.location.href = `http://${window.location.hostname}:9902`;
+    if (window.location.hostname.includes('github.io') && window.KLOUDY_LOGIN_URL) {
+      window.location.href = window.location.origin + window.KLOUDY_LOGIN_URL;
+    } else {
+      window.location.href = `http://${window.location.hostname}:9902`;
+    }
   }
 });
 

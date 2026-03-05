@@ -1,5 +1,5 @@
-// API base for production: set window.KLOUDY_API_BASE = "https://api.kloudykare.com";
-window.KLOUDY_API_BASE = window.KLOUDY_API_BASE || "";
+// API base for production (GitHub Pages frontend calls api.kloudykare.com)
+window.KLOUDY_API_BASE = window.KLOUDY_API_BASE || "https://api.kloudykare.com";
 // Base path for GitHub Pages (e.g. /KloudyKare). Empty for production at kloudykare.com root.
 window.KLOUDY_BASE_PATH = window.KLOUDY_BASE_PATH || "/KloudyKare";
 const _bp = (window.KLOUDY_BASE_PATH || "").replace(/\/$/, "");
