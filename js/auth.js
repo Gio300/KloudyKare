@@ -33,11 +33,20 @@ async function redirectByRole(user) {
     // #region agent log
     fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:beforeAdminConfigFetch',message:'Before adminConfig fetch',data:{adminConfigUrl},hypothesisId:'H1,H4',timestamp:Date.now()})}).catch(()=>{});
     // #endregion
-    const configRes = await fetchWithCreds(adminConfigUrl);
+    let configRes;
+    try {
+      configRes = await fetchWithCreds(adminConfigUrl);
+    } catch (e) {
+      configRes = { ok: false };
+    }
     // #region agent log
     fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:adminConfigResponse',message:'Admin config response',data:{status:configRes?.status,ok:configRes?.ok,statusText:configRes?.statusText},hypothesisId:'H1,H2',timestamp:Date.now()})}).catch(()=>{});
     // #endregion
     if (!configRes.ok) {
+      if (isGitHubPages) {
+        window.location.href = targetUrl;
+        return;
+      }
       await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });
       window.location.href = LOGIN_URL;
       return;
