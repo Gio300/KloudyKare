@@ -201,7 +201,7 @@ async function loadChatCustomers(limit = 200) {
   const url = `${API}/customers?limit=${limit}`;
 let res;
   try {
-    res = await fetch(url);
+    res = await apiFetch(`${API}/customers?limit=${limit}`);
 } catch (err) {
 throw err;
   }
@@ -223,7 +223,10 @@ async function loadChatHistory() {
     const data = await res.json();
     chatHistory = Array.isArray(data) ? data : [];
     if (!res.ok && data?.error) {
-      if (res.status === 401) window.location.href = window.KLOUDY_LOGIN_URL || '/';
+      if (res.status === 401) {
+        const loginPath = window.KLOUDY_LOGIN_URL || '/KloudyKare/';
+        window.location.href = loginPath.startsWith('http') ? loginPath : (window.location.origin + loginPath);
+      }
       return;
     }
     renderMessages(chatHistory);
