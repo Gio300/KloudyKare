@@ -183,14 +183,6 @@ document.querySelectorAll('.customize-device-btn').forEach((btn) => {
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
-
-// #region agent log
-(function _dbgInit() {
-  const payload = { sessionId: '1ffda1', hypothesisId: 'H1,H4', location: 'app.js:init', message: 'DOM init', data: { chatMessages: !!chatMessages, chatInput: !!chatInput, chatSend: !!chatSend, btnProfiles: !!document.getElementById('btn-profiles'), btnChat: !!document.getElementById('btn-chat'), btnEligibility: !!document.getElementById('btn-eligibility'), btnLogout: !!document.getElementById('btn-logout'), pathname: window.location.pathname }, timestamp: Date.now() };
-  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify(payload) }).catch(() => {});
-})();
-// #endregion
-
 let chatHistory = [];
 
 let chatCustomersCache = [];
@@ -207,20 +199,11 @@ function closeHelpModal() {
 
 async function loadChatCustomers(limit = 200) {
   const url = `${API}/customers?limit=${limit}`;
-  // #region agent log
-  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3621a5'},body:JSON.stringify({sessionId:'3621a5',location:'app.js:loadChatCustomers',message:'Fetch start',data:{url,origin:location.origin},hypothesisId:'H1,H2,H4,H5',timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-  let res;
+let res;
   try {
     res = await fetch(url);
-    // #region agent log
-    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3621a5'},body:JSON.stringify({sessionId:'3621a5',location:'app.js:loadChatCustomers',message:'Fetch response',data:{url,status:res.status,ok:res.ok},hypothesisId:'H1,H3',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  } catch (err) {
-    // #region agent log
-    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3621a5'},body:JSON.stringify({sessionId:'3621a5',location:'app.js:loadChatCustomers',message:'Fetch threw',data:{url,error:err?.message},hypothesisId:'H2',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    throw err;
+} catch (err) {
+throw err;
   }
   const customers = await res.json().catch(() => []);
   chatCustomersCache = Array.isArray(customers) ? customers : [];
@@ -1810,10 +1793,7 @@ chatInput?.addEventListener('input', () => {
 });
 
 chatInput?.addEventListener('keydown', (e) => {
-  // #region agent log
-  if (e.key === 'Enter') fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify({ sessionId: '1ffda1', hypothesisId: 'H2', location: 'app.js:keydown1', message: 'First keydown handler', data: { key: e.key, hashOpen: hashState?.open, hashMatches: hashState?.matches?.length, mentionOpen: mentionState?.open, mentionMatches: mentionState?.matches?.length }, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
-  if (hashState.open && hashState.matches?.length) {
+if (hashState.open && hashState.matches?.length) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -1872,11 +1852,7 @@ chatInput?.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-  // #region agent log
-  const t = e.target; const id = t?.id; const cls = t?.className;
-  if (id && ['btn-chat','btn-profiles','btn-eligibility','btn-logout','chat-send'].includes(id)) fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify({ sessionId: '1ffda1', hypothesisId: 'H3,H5', location: 'app.js:docClick', message: 'Doc click on button', data: { id, tagName: t?.tagName }, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
-  const mentionDropdown = document.getElementById('chat-mention-dropdown');
+const mentionDropdown = document.getElementById('chat-mention-dropdown');
   const hashDropdown = document.getElementById('chat-hash-dropdown');
   const expandHashDropdown = document.getElementById('expand-modal-hash-dropdown');
   const inner = document.querySelector('.chat-input-inner');
@@ -2089,26 +2065,17 @@ function initScrollToBottomButtons() {
 initScrollToBottomButtons();
 
 chatSend?.addEventListener('click', () => {
-  // #region agent log
-  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify({ sessionId: '1ffda1', hypothesisId: 'H5', location: 'app.js:sendClick', message: 'Send clicked', data: {}, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
-  sendMessage();
+sendMessage();
 });
 chatInput?.addEventListener('keydown', (e) => {
-  // #region agent log
-  if (e.key === 'Enter') fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify({ sessionId: '1ffda1', hypothesisId: 'H2,H5', location: 'app.js:chatKeydown', message: 'Enter in chat', data: { key: e.key, shiftKey: e.shiftKey, hashOpen: typeof hashState !== 'undefined' && hashState?.open, mentionOpen: typeof mentionState !== 'undefined' && mentionState?.open }, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
-  if (e.key === 'Enter' && !e.shiftKey) {
+if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
 
 document.getElementById('btn-eligibility')?.addEventListener('click', async () => {
-  // #region agent log
-  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify({ sessionId: '1ffda1', hypothesisId: 'H5', location: 'app.js:btnEligibility', message: 'Eligibility clicked', data: {}, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
-  const isStandalone = ['9900', '9990'].includes(window.location.port);
+const isStandalone = ['9900', '9990'].includes(window.location.port);
   const eligUrl = isStandalone ? `http://${window.location.hostname}:9933/` : '/eligibility/';
   try {
     const startRes = await apiFetch(`${API}/eligibility/start-app`, { method: 'POST' }).catch(() => null);
@@ -2121,10 +2088,7 @@ document.getElementById('btn-eligibility')?.addEventListener('click', async () =
 });
 
 document.getElementById('btn-profiles')?.addEventListener('click', () => {
-  // #region agent log
-  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify({ sessionId: '1ffda1', hypothesisId: 'H5', location: 'app.js:btnProfiles', message: 'Profiles clicked', data: {}, timestamp: Date.now() }) }).catch(() => {});
-  // #endregion
-  const chatContainer = document.querySelector('.chat-container');
+const chatContainer = document.querySelector('.chat-container');
   if (chatContainer) chatContainer.style.display = 'none';
   const profilesView = document.getElementById('profiles-view');
   if (profilesView) profilesView.style.display = 'block';
