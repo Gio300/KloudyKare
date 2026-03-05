@@ -57,9 +57,11 @@ function redirectToLogin() {
 
 async function initAuth() {
   const user = await checkAuth();
-  const p = window.location.pathname.replace(/\/$/, '') || '/';
+  const path = window.location.pathname;
   const base = (window.KLOUDY_BASE_PATH || '/KloudyKare').replace(/\/$/, '');
-  const isLoginPage = p === '/' || p === base || window.location.pathname.endsWith('index.html');
+  const pathNorm = path.replace(/\/$/, '') || '/';
+  // Login page: /KloudyKare, /KloudyKare/, or .../index.html. Exclude bare '/' (site root = 404 on GitHub Pages)
+  const isLoginPage = (pathNorm === base || path === base + '/') || path.endsWith('index.html');
 if (user && isLoginPage) {
     await redirectByRole(user);
     return;
