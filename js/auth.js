@@ -1,4 +1,7 @@
-const API = '/api';
+const API = (window.KLOUDY_API_BASE || '') + '/api';
+const BASE = (window.KLOUDY_BASE_PATH || '').replace(/\/$/, '');
+const LOGIN_URL = BASE ? BASE + '/' : '/';
+const CHAT_URL = BASE ? BASE + '/chat.html' : '/chat.html';
 
 async function fetchWithCreds(url, opts = {}) {
   return fetch(url, { ...opts, credentials: 'include' });
@@ -15,7 +18,7 @@ async function checkAuth() {
 
 async function redirectByRole(user) {
   if (!user) {
-    window.location.href = '/';
+    window.location.href = LOGIN_URL;
     return;
   }
   const role = user.role || 'client';
@@ -23,13 +26,13 @@ async function redirectByRole(user) {
   if (role === 'admin' && adminApproved) {
     const host = window.location.hostname;
     const isPublicDomain = host === 'kloudykare.com' || host === 'www.kloudykare.com';
-    const targetUrl = isPublicDomain ? '/admin' : `http://${host}:9900/admin`;
+    const targetUrl = isPublicDomain ? '/admin' : (BASE ? BASE + '/admin' : 'http://' + host + ':9900/admin');
     // Verify backend accepts our session before redirecting (avoids redirect loop when session stores differ)
-    const adminConfigUrl = isPublicDomain ? '/admin/api/config' : `http://${host}:9900/admin/api/config`;
+    const adminConfigUrl = isPublicDomain ? '/admin/api/config' : (BASE ? BASE + '/admin/api/config' : 'http://' + host + ':9900/admin/api/config');
     const configRes = await fetchWithCreds(adminConfigUrl);
     if (!configRes.ok) {
       await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });
-      window.location.href = '/';
+      window.location.href = LOGIN_URL;
       return;
     }
     // #region agent log
@@ -39,19 +42,20 @@ async function redirectByRole(user) {
     return;
   }
   if (role === 'admin' && !adminApproved) {
-    window.location.href = '/chat.html?message=pending_admin';
+    window.location.href = CHAT_URL + '?message=pending_admin';
     return;
   }
-  window.location.href = '/chat.html';
+  window.location.href = CHAT_URL;
 }
 
 function redirectToLogin() {
-  window.location.href = '/';
+  window.location.href = LOGIN_URL;
 }
 
 async function initAuth() {
   const user = await checkAuth();
-  const isLoginPage = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
+  const pathname = window.location.pathname;
+  const isLoginPage = pathname === '/' || pathname === LOGIN_URL || pathname === BASE || pathname === BASE + '/' || pathname.endsWith('index.html');
   // #region agent log
   (function() {
     const payload = { sessionId: '1ffda1', hypothesisId: 'H3,H4', location: 'auth.js:initAuth', message: 'initAuth', data: { hasUser: !!user, userId: user?.id, role: user?.role, pathname: window.location.pathname, isLoginPage }, timestamp: Date.now() };

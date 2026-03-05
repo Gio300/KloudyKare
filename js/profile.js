@@ -20,7 +20,7 @@ async function loadProfile() {
     const res = await fetchWithCreds(`${API}/profile`);
     const data = await res.json();
     if (res.status === 401) {
-      window.location.href = '/';
+      window.location.href = window.KLOUDY_LOGIN_URL || "/";
       return;
     }
     if (!res.ok) throw new Error(data.error || 'Failed to load profile');
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json();
         if (res.status === 401) {
-          window.location.href = '/';
+          window.location.href = window.KLOUDY_LOGIN_URL || "/";
           return;
         }
         if (!res.ok) throw new Error(data.error || 'Update failed');
