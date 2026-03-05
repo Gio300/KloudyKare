@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Approvals - Kloudy</title>
+  <base href="/KloudyKare/approvals/">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+    .header { background: #1e3a5f; color: #fff; padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .main { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; max-width: 1400px; margin: 0 auto; }
+    .panel { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; flex: 1; min-width: 280px; }
+    .panel-header { padding: 0.75rem 1rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: 600; }
+    .approvals-list { padding: 1rem; max-height: 400px; overflow-y: auto; }
+    .approval-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem; border-bottom: 1px solid #f1f5f9; }
+    .approval-item:last-child { border-bottom: none; }
+    .approval-info { flex: 1; min-width: 0; }
+    .approval-email { font-weight: 500; word-break: break-all; }
+    .approval-name { font-size: 0.875rem; color: #64748b; }
+    .approval-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .btn { padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.875rem; cursor: pointer; border: 1px solid transparent; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline { background: #fff; border-color: #e2e8f0; color: #64748b; }
+    .btn-outline:hover { background: #f8fafc; color: #dc2626; }
+    .empty { padding: 2rem; text-align: center; color: #64748b; }
+    .chat-panel { display: flex; flex-direction: column; min-height: 450px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .chat-msg { max-width: 85%; padding: 0.5rem 0.75rem; border-radius: 8px; }
+    .chat-msg.user { align-self: flex-end; background: #dbeafe; }
+    .chat-msg.assistant { align-self: flex-start; background: #fef3e2; }
+    .chat-input-bar { display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid #e2e8f0; }
+    .chat-input-bar textarea { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; resize: none; font-family: inherit; }
+    .chat-input-bar textarea:focus { outline: none; border-color: #2563eb; }
+    .hidden { display: none !important; }
+    .error { color: #dc2626; font-size: 0.875rem; padding: 0.25rem 0; }
+    .link-login { margin-top: 1rem; padding: 0 1rem 1rem; font-size: 0.875rem; }
+    .link-login a { color: #2563eb; text-decoration: none; }
+    .link-login a:hover { text-decoration: underline; }
+    .chat-thinking { display: flex; align-items: center; gap: 0.5rem; }
+    .chat-thinking-logo { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+    .chat-thinking .thinking-dots { display: flex; gap: 4px; }
+    .chat-thinking .thinking-dots span { width: 6px; height: 6px; border-radius: 50%; background: #64748b; animation: thinking-blink 1.4s ease-in-out infinite both; }
+    .chat-thinking .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-thinking .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes thinking-blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Admin Approvals</h1>
+    <div class="ui-mode-switcher" title="Switch UI layout. Click active icon to reset to auto.">
+      <button type="button" class="ui-mode-btn" data-mode="desktop" aria-label="Desktop layout" title="Desktop layout">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button type="button" class="ui-mode-btn" data-mode="mobile" aria-label="Mobile layout" title="Mobile layout">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="header-actions" style="margin-left: auto; display: flex; gap: 0.5rem;">
+      <button class="btn btn-outline" id="btn-logout">Logout</button>
+      <div class="export-dropdown" style="position: relative;">
+        <button class="btn btn-outline" id="btn-export">Export</button>
+        <div class="export-menu" id="export-menu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 0.25rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 10;">
+          <button class="export-menu-item" data-export="chat" style="display: block; width: 100%; padding: 0.5rem 1rem; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.875rem;">Export chat history</button>
+          <button class="export-menu-item" data-export="profiles" style="display: block; width: 100%; padding: 0.5rem 1rem; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.875rem;">Export profiles</button>
+          <button class="export-menu-item" data-export="backup" style="display: block; width: 100%; padding: 0.5rem 1rem; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.875rem;">Full backup</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="main">
+    <div class="panel">
+      <div class="panel-header">Pending Admin Accounts</div>
+      <div class="approvals-list" id="approvals-list">
+        <div class="empty" id="approvals-empty">Loading...</div>
+      </div>
+      <div class="link-login">
+        <a href="#" id="link-login" target="_blank" rel="noopener">Sign in to Kloudy</a>
+      </div>
+    </div>
+    <div class="panel chat-panel">
+      <div class="panel-header">System Q&A</div>
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-input-bar">
+        <textarea id="chat-input" placeholder="Ask about the Kloudy system..." rows="2"></textarea>
+        <button class="btn btn-primary" id="chat-send">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="customize-modal" id="customize-modal" style="display:none;">
+    <div class="customize-modal-overlay"></div>
+    <div class="customize-modal-content">
+      <div class="customize-modal-header">
+        <h3>Customize view</h3>
+        <button type="button" class="btn btn-outline customize-modal-close" id="customize-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="customize-modal-body">
+        <div class="customize-field">
+          <label>Device layout</label>
+          <div class="customize-device-btns">
+            <button type="button" class="btn btn-outline customize-device-btn" data-mode="desktop" title="Desktop layout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Desktop
+            </button>
+            <button type="button" class="btn btn-outline customize-device-btn" data-mode="mobile" title="Mobile layout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+              Phone
+            </button>
+          </div>
+        </div>
+        <div class="customize-field">
+          <label>Text size</label>
+          <div class="customize-text-size">
+            <input type="range" id="customize-text-size" min="0.85" max="1.3" step="0.05" value="1">
+            <span id="customize-text-size-value">100%</span>
+          </div>
+        </div>
+        <div class="customize-field">
+          <label>Zoom</label>
+          <div class="customize-zoom">
+            <input type="range" id="customize-zoom" min="0.9" max="1.25" step="0.05" value="1">
+            <span id="customize-zoom-value">100%</span>
+          </div>
+        </div>
+        <div class="customize-modal-actions">
+          <button type="button" class="btn btn-outline" id="customize-reset">Reset</button>
+          <button type="button" class="btn btn-primary" id="customize-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+  <script src="js/openemr-export.js"></script>
+</body>
+</html>

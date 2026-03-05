@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kloudy - Nevada Medicaid Eligibility</title>
+  <script>if(window.location.pathname.includes('eligibility')){var b=document.createElement('base');b.href='/KloudyKare/eligibility/';document.head.appendChild(b);}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="images/KloudyCareLogos.png">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/eligibility.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="header-logo"><img src="images/KloudyCareLogos.png" alt="KloudyCare" class="logo-img"></h1>
+      <div class="ui-mode-switcher" title="Switch UI layout. Click active icon to reset to auto.">
+        <button type="button" class="ui-mode-btn" data-mode="desktop" aria-label="Desktop layout" title="Desktop layout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+        <button type="button" class="ui-mode-btn" data-mode="mobile" aria-label="Mobile layout" title="Mobile layout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" id="btn-chat">Chat</button>
+        <button class="btn btn-outline" id="btn-profiles">Profiles</button>
+        <button class="btn btn-outline btn-active" id="btn-eligibility">&#9989; Eligibility</button>
+        <div class="export-dropdown">
+          <button class="btn btn-outline" id="btn-export">Export</button>
+          <div class="export-menu" id="export-menu" style="display: none;">
+            <button class="export-menu-item" data-export="chat">Export chat history</button>
+            <button class="export-menu-item" data-export="profiles">Export profiles</button>
+            <button class="export-menu-item" data-export="backup">Full backup</button>
+          </div>
+        </div>
+        <div class="header-notification-wrap" style="position:relative;">
+          <button class="btn btn-outline btn-icon" id="btn-notifications" title="Messages" aria-label="Messages"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+          <span class="notification-dot" id="notification-dot" style="display:none" aria-hidden="true"></span>
+        </div>
+        <button class="theme-toggle" id="theme-toggle">Dark</button>
+        <button class="btn btn-outline" id="btn-logout">Logout</button>
+      </div>
+    </header>
+
+    <main class="view-eligibility">
+      <div class="eligibility-view" id="eligibility-view">
+        <div class="totp-floating-card" id="totp-floating-card">
+          <label>Login code (MFA)</label>
+          <div class="totp-code-row">
+            <code id="totp-code-display" class="totp-code-display">—</code>
+            <div class="totp-actions">
+              <button type="button" class="btn btn-outline btn-sm" id="totp-copy-btn" title="Copy code">Copy</button>
+              <button type="button" class="btn btn-outline btn-sm" id="totp-refresh-btn" title="Refresh now">Refresh</button>
+            </div>
+            <span class="totp-refresh-msg" id="totp-refresh-msg">Refreshes every 10s</span>
+          </div>
+        </div>
+        <div class="eligibility-form-card">
+          <h2>Nevada Medicaid Eligibility Check</h2>
+          <p class="eligibility-subtitle">Agent-first verification. Manual check available if needed.</p>
+          <form id="eligibility-form" class="eligibility-form">
+            <div class="form-row">
+              <div class="form-field">
+                <label for="elig-lastname">* Last Name</label>
+                <input type="text" id="elig-lastname" required placeholder="Smith">
+              </div>
+              <div class="form-field">
+                <label for="elig-firstname">* First Name</label>
+                <input type="text" id="elig-firstname" required placeholder="Jane">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label for="elig-dob">* Birth Date</label>
+                <input type="text" id="elig-dob" required placeholder="MM/DD/YYYY">
+              </div>
+              <div class="form-field">
+                <label for="elig-effective">Effective From Date (optional)</label>
+                <input type="text" id="elig-effective" placeholder="MM/DD/YYYY">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label for="elig-recipient">Recipient ID</label>
+                <input type="text" id="elig-recipient" placeholder="Optional if SSN provided">
+              </div>
+              <div class="form-field">
+                <label for="elig-ssn">SSN</label>
+                <input type="text" id="elig-ssn" placeholder="Optional if Recipient ID provided">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn" id="btn-check-eligibility">Check Eligibility</button>
+              <button type="button" class="btn btn-outline" id="btn-open-portal">Open Portal</button>
+              <button type="button" class="btn btn-outline" id="btn-manual-check" style="display: none;">Manual Check</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="eligibility-results-card" id="eligibility-results" style="display: none;">
+          <h3>Results</h3>
+          <div id="eligibility-results-content"></div>
+          <div class="manual-check-actions" id="manual-check-actions" style="display: none; margin-top: 1rem;">
+            <p class="eligibility-fallback-msg">Agent could not complete. Verify eligibility manually:</p>
+            <button class="btn btn-outline" id="btn-manual-check-results">Open Medicaid Portal (Manual Check)</button>
+          </div>
+        </div>
+
+        <div class="eligibility-status" id="eligibility-status"></div>
+      </div>
+
+      <div class="chat-container" id="eligibility-chat-container">
+        <div class="chat-context-bar">
+          <label>Chat about:</label>
+          <select id="chat-customer-context">
+            <option value="">All customers</option>
+          </select>
+          <button class="btn btn-outline btn-sm" id="btn-create-profile-from-chat" title="Create profile from chat">Create profile</button>
+        </div>
+        <div class="chat-messages-outer">
+          <div class="chat-messages" id="chat-messages"></div>
+          <button type="button" class="chat-scroll-to-bottom" id="eligibility-chat-scroll-to-bottom" title="Scroll to bottom" aria-label="Scroll to bottom">&#9660;</button>
+        </div>
+        <div class="chat-input-area" id="chat-input-area">
+          <div class="chat-mention-dropdown" id="chat-mention-dropdown" style="display: none;"></div>
+          <div class="chat-hash-dropdown" id="chat-hash-dropdown" style="display: none;"></div>
+          <button class="chat-minimize-btn" id="chat-minimize-btn" title="Minimize input bar">−</button>
+          <div class="chat-input-inner">
+            <button class="btn btn-outline chat-upload-btn" id="chat-upload-btn" title="Upload document">&#128206;</button>
+            <textarea id="chat-input" placeholder="Type @name then # for actions (email, dm, virtual call, etc.)" rows="1"></textarea>
+            <button class="btn" id="chat-send">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="profiles-view" id="profiles-view" style="display: none;">
+        <div class="profiles-toolbar">
+          <div class="profiles-filter-tabs">
+            <button class="btn btn-outline btn-sm profile-tab active" data-filter="all">All Profiles</button>
+            <button class="btn btn-outline btn-sm profile-tab" data-filter="awaiting" title="Profiles with contact info but no initial call yet">
+              <span class="icon-needs-contact" title="Needs first contact">&#128222;</span> Awaiting First Contact
+            </button>
+          </div>
+          <input type="text" id="profile-search" placeholder="Search customers...">
+          <button class="btn" id="btn-new-profile">New Profile</button>
+        </div>
+        <div class="profile-list" id="profile-list"></div>
+        <div class="profile-detail" id="profile-detail" style="display: none;"></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="upload-modal" id="upload-modal" style="display:none;">
+    <div class="upload-modal-content">
+      <div class="upload-modal-header">
+        <h3>Upload Document</h3>
+        <button class="btn btn-outline" id="upload-modal-close">Close</button>
+      </div>
+      <div class="upload-modal-body">
+        <div class="upload-modal-field">
+          <label>Profile / Customer</label>
+          <select id="upload-modal-customer">
+            <option value="">Select a customer...</option>
+          </select>
+        </div>
+        <div class="upload-modal-field">
+          <label>Document</label>
+          <div class="upload-modal-drop" id="upload-modal-drop">Drop file here, click to select, or paste screenshot (Ctrl+V)</div>
+          <input type="file" id="upload-modal-file" multiple style="display:none">
+        </div>
+        <div class="upload-modal-field">
+          <label>Notes about this document</label>
+          <textarea id="upload-modal-notes" placeholder="Add notes (e.g. Medicaid application, ID verification, etc.)" rows="3"></textarea>
+        </div>
+        <div class="upload-modal-status" id="upload-modal-status"></div>
+        <button class="btn" id="upload-modal-submit">Upload</button>
+        <div class="upload-modal-docs" id="upload-modal-docs">
+          <h4>Documents for selected profile</h4>
+          <ul id="upload-modal-doc-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="create-profile-modal" id="create-profile-modal" style="display:none;">
+    <div class="create-profile-modal-content">
+      <div class="create-profile-modal-header">
+        <h3>Create Profile from Chat</h3>
+        <button class="btn btn-outline" id="create-profile-modal-close">Close</button>
+      </div>
+      <div class="create-profile-modal-body">
+        <p class="create-profile-hint">Paste or type client info (e.g. name, DOB, phone, state, provider type).</p>
+        <textarea id="create-profile-input" placeholder="e.g. Priscilla Washington, NV PT30, DOB 1985-03-15, phone 702-555-1234" rows="4"></textarea>
+        <button class="btn" id="create-profile-submit">Create Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-pip" id="action-pip" style="display: none;">
+    <div class="action-pip-content">
+      <div class="action-pip-header">
+        <h3 class="action-pip-title" id="action-pip-title">Action</h3>
+        <button class="btn btn-outline btn-sm" id="action-pip-close" title="Close">×</button>
+      </div>
+      <div class="action-pip-body" id="action-pip-body"></div>
+      <div class="action-pip-footer" id="action-pip-footer"></div>
+    </div>
+  </div>
+
+  <div class="notes-modal" id="notes-modal" style="display:none;">
+    <div class="notes-modal-content">
+      <div class="notes-modal-header">
+        <h3>Call Notes</h3>
+        <button class="btn btn-outline" id="btn-close-notes">Close</button>
+      </div>
+      <div class="notes-add-form">
+        <div class="notes-form-row">
+          <div class="notes-form-field">
+            <label>Process step</label>
+            <select id="note-process-step">
+              <option value="">— Select step —</option>
+            </select>
+          </div>
+          <div class="notes-form-field">
+            <label>Disposition</label>
+            <select id="note-disposition">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+        </div>
+        <input type="text" id="note-call-reason" placeholder="Call reason (free text)">
+        <textarea id="note-body" placeholder="Notes... (paste screenshot with Ctrl+V)" rows="2"></textarea>
+        <div class="notes-ai-assist">
+          <button class="btn btn-outline btn-sm" id="btn-ai-suggest">Ask AI for follow-up questions</button>
+          <div id="ai-suggestions" class="ai-suggestions"></div>
+        </div>
+        <button class="btn" id="btn-add-note">Add Note</button>
+      </div>
+      <div class="notes-list" id="notes-list"></div>
+    </div>
+  </div>
+
+  <div class="customize-modal" id="customize-modal" style="display:none;">
+    <div class="customize-modal-overlay"></div>
+    <div class="customize-modal-content">
+      <div class="customize-modal-header">
+        <h3>Customize view</h3>
+        <button type="button" class="btn btn-outline customize-modal-close" id="customize-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="customize-modal-body">
+        <div class="customize-field">
+          <label>Device layout</label>
+          <div class="customize-device-btns">
+            <button type="button" class="btn btn-outline customize-device-btn" data-mode="desktop" title="Desktop layout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Desktop
+            </button>
+            <button type="button" class="btn btn-outline customize-device-btn" data-mode="mobile" title="Mobile layout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+              Phone
+            </button>
+          </div>
+        </div>
+        <div class="customize-field">
+          <label>Text size</label>
+          <div class="customize-text-size">
+            <input type="range" id="customize-text-size" min="0.85" max="1.3" step="0.05" value="1">
+            <span id="customize-text-size-value">100%</span>
+          </div>
+        </div>
+        <div class="customize-field">
+          <label>Zoom</label>
+          <div class="customize-zoom">
+            <input type="range" id="customize-zoom" min="0.9" max="1.25" step="0.05" value="1">
+            <span id="customize-zoom-value">100%</span>
+          </div>
+        </div>
+        <div class="customize-modal-actions">
+          <button type="button" class="btn btn-outline" id="customize-reset">Reset</button>
+          <button type="button" class="btn" id="customize-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-help-modal" id="chat-help-modal" style="display:none;">
+    <div class="chat-help-modal-overlay"></div>
+    <div class="chat-help-modal-content">
+      <div class="chat-help-modal-header">
+        <h3>How to use the system</h3>
+        <button type="button" class="btn btn-outline chat-help-modal-close" id="chat-help-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="chat-help-modal-body">
+        <p><strong>Navigation:</strong> Chat, Profiles, Eligibility, Export, Notifications</p>
+        <p><strong>Eligibility:</strong> Enter patient info and check eligibility. Use Manual Check if the agent cannot complete.</p>
+        <p><strong>Chat actions:</strong> Type <code>@Name</code> to mention a customer, then <code>#</code> for email, dm, virtual call, etc.</p>
+      </div>
+    </div>
+  </div>
+  <button type="button" class="help-float-btn" id="help-float-btn" title="How to use the system" aria-label="Help">?</button>
+<script src="js/config.js"></script>
+  <script src="js/eligibility.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/profiles.js"></script>
+  <script src="js/openemr-panel.js"></script>
+  <script src="js/export.js"></script>
+</body>
+</html>

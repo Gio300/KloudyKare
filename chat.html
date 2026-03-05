@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/KloudyKare/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kloudy - Chat</title>
+  <link rel="icon" type="image/png" href="img/logo.png?v=1">
+  <link rel="shortcut icon" type="image/png" href="img/logo.png?v=1">
+  <link rel="stylesheet" href="css/user.css">
+</head>
+<body>
+  <div class="chat-app">
+    <header class="chat-header">
+      <img src="img/logo.png" alt="Kloudy" class="chat-logo" onerror="this.style.display='none'">
+      <h1>Kloudy</h1>
+      <div class="ui-mode-switcher" title="Switch UI layout. Click active icon to reset to auto.">
+        <button type="button" class="ui-mode-btn" data-mode="desktop" aria-label="Desktop layout" title="Desktop layout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+        <button type="button" class="ui-mode-btn" data-mode="mobile" aria-label="Mobile layout" title="Mobile layout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="chat-header-actions">
+        <button type="button" class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">Dark</button>
+        <button class="btn btn-outline" id="btn-profile">Profile</button>
+        <button class="btn btn-outline" id="btn-logout">Logout</button>
+      </div>
+    </header>
+
+    <main class="chat-main">
+      <div id="pending-admin-banner" class="pending-admin-banner hidden">
+        <p>Your admin access is pending approval. An administrator will review your request.</p>
+      </div>
+      <div class="chat-messages-outer">
+        <div class="chat-messages" id="chat-messages"></div>
+        <button type="button" class="chat-scroll-to-bottom" id="chat-scroll-to-bottom" title="Scroll to bottom" aria-label="Scroll to bottom">&#9660;</button>
+      </div>
+      <div class="chat-input-area" id="chat-input-area">
+        <div class="chat-suggested-prompts" id="chat-suggested-prompts"></div>
+        <div class="chat-attachments" id="chat-attachments"></div>
+        <div class="chat-input-bar">
+          <input type="file" id="chat-file-input" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp,.gif,image/*" style="display:none">
+          <button class="btn btn-icon" id="chat-attach" title="Attach file or screenshot (or paste with Ctrl+V)">&#128206;</button>
+          <textarea id="chat-input" placeholder="Type your message... (paste screenshot with Ctrl+V)" rows="1"></textarea>
+          <div class="chat-input-actions">
+            <button class="btn btn-icon" id="chat-minimize" title="Minimize">−</button>
+            <button class="btn btn-primary" id="chat-send">Send</button>
+          </div>
+        </div>
+        <button class="btn btn-expand" id="chat-expand" title="Expand">Type a message...</button>
+      </div>
+    </main>
+  </div>
+
+  <div class="profile-overlay" id="profile-overlay"></div>
+  <div class="profile-panel" id="profile-panel">
+    <h2>Profile <span class="dev-badge hidden" id="profile-dev-badge">Developer</span></h2>
+    <form id="profile-form">
+      <label>Full Name</label>
+      <input type="text" id="profile-name" placeholder="Your name">
+      <label>Email</label>
+      <input type="email" id="profile-email" required>
+      <label>New Password (leave blank to keep)</label>
+      <input type="password" id="profile-new-password" placeholder="Min 6 characters">
+      <label>Current Password (required to change password)</label>
+      <input type="password" id="profile-current-password" placeholder="For password change">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="button" class="btn btn-outline" id="profile-close">Close</button>
+    </form>
+    <div class="profile-section">
+      <h3>Two-Factor Authentication</h3>
+      <p class="profile-totp-status" id="profile-totp-status"></p>
+      <button type="button" class="btn btn-outline hidden" id="profile-totp-enable">Enable 2FA</button>
+      <button type="button" class="btn btn-outline hidden" id="profile-totp-disable">Disable 2FA</button>
+    </div>
+    <div class="login-error" id="profile-error"></div>
+  </div>
+
+  <div class="totp-modal-overlay" id="totp-modal-overlay"></div>
+  <div class="totp-modal" id="totp-modal">
+    <h3>Set up Two-Factor Authentication</h3>
+    <p>Scan this QR code with your authenticator app (e.g. Google Authenticator):</p>
+    <div class="totp-qr-container"><img id="totp-qr-img" alt="QR code"></div>
+    <p class="totp-secret-text">Or enter this secret manually: <code id="totp-secret-display"></code></p>
+    <label for="totp-setup-code">Enter the 6-digit code from your app to verify:</label>
+    <input type="text" id="totp-setup-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000">
+    <div class="login-error" id="totp-setup-error"></div>
+    <div class="totp-modal-actions">
+      <button type="button" class="btn btn-primary" id="totp-setup-verify">Verify & Enable</button>
+      <button type="button" class="btn btn-outline" id="totp-setup-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div class="totp-modal-overlay" id="totp-disable-modal-overlay"></div>
+  <div class="totp-modal" id="totp-disable-modal">
+    <h3>Disable Two-Factor Authentication</h3>
+    <p>Enter your password and current authenticator code to disable 2FA:</p>
+    <label for="totp-disable-password">Password</label>
+    <input type="password" id="totp-disable-password" placeholder="Your password">
+    <label for="totp-disable-code">Authenticator code</label>
+    <input type="text" id="totp-disable-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000">
+    <div class="login-error" id="totp-disable-error"></div>
+    <div class="totp-modal-actions">
+      <button type="button" class="btn btn-primary" id="totp-disable-submit">Disable 2FA</button>
+      <button type="button" class="btn btn-outline" id="totp-disable-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div class="chat-help-modal" id="chat-help-modal" style="display:none;">
+    <div class="chat-help-modal-overlay"></div>
+    <div class="chat-help-modal-content">
+      <div class="chat-help-modal-header">
+        <h3>How to use the system</h3>
+        <button type="button" class="btn btn-outline chat-help-modal-close" id="chat-help-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="chat-help-modal-body">
+        <p><strong>Chat:</strong> Type your message and press Enter or tap Send.</p>
+        <p><strong>Attachments:</strong> Use the attach button or paste screenshots with Ctrl+V.</p>
+        <p><strong>Profile:</strong> Update your name, email, and password from the Profile button.</p>
+        <p><strong>Reminders:</strong> Ask the assistant to set reminders for you.</p>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="help-float-btn" id="help-float-btn" title="How to use the system" aria-label="Help">?</button>
+
+  <div class="customize-modal" id="customize-modal" style="display:none;">
+    <div class="customize-modal-overlay"></div>
+    <div class="customize-modal-content">
+      <div class="customize-modal-header">
+        <h3>Customize view</h3>
+        <button type="button" class="btn btn-outline customize-modal-close" id="customize-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="customize-modal-body">
+        <div class="customize-field">
+          <label>Device layout</label>
+          <div class="customize-device-btns">
+            <button type="button" class="btn btn-outline customize-device-btn" data-mode="desktop" title="Desktop layout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Desktop
+            </button>
+            <button type="button" class="btn btn-outline customize-device-btn" data-mode="mobile" title="Mobile layout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+              Phone
+            </button>
+          </div>
+        </div>
+        <div class="customize-field">
+          <label>Text size</label>
+          <div class="customize-text-size">
+            <input type="range" id="customize-text-size" min="0.85" max="1.3" step="0.05" value="1">
+            <span id="customize-text-size-value">100%</span>
+          </div>
+        </div>
+        <div class="customize-field">
+          <label>Zoom</label>
+          <div class="customize-zoom">
+            <input type="range" id="customize-zoom" min="0.9" max="1.25" step="0.05" value="1">
+            <span id="customize-zoom-value">100%</span>
+          </div>
+        </div>
+        <div class="customize-modal-actions">
+          <button type="button" class="btn btn-outline" id="customize-reset">Reset</button>
+          <button type="button" class="btn btn-primary" id="customize-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="js/config.js"></script>
+    <script src="js/theme.js"></script>
+  <script src="js/ui-switcher.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+/* Eligibility screen styles */
+.view-eligibility {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.eligibility-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eligibility-form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.eligibility-form-card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.eligibility-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.totp-floating-card {
+  position: fixed;
+  top: 4.5rem;
+  right: 1rem;
+  z-index: 100;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+.totp-floating-card label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.totp-floating-card .totp-code-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.totp-floating-card .totp-code-display {
+  font-family: ui-monospace, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--text);
+  transition: background-color 0.3s ease;
+}
+
+.totp-floating-card .totp-code-display.totp-code-highlight {
+  animation: totp-pulse 0.8s ease;
+}
+
+@keyframes totp-pulse {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: var(--accent); opacity: 0.9; color: white; }
+}
+
+.totp-floating-card .totp-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.totp-floating-card .btn-sm {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.totp-refresh-msg {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.eligibility-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  flex: 1;
+  min-width: 160px;
+}
+
+.form-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.form-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.eligibility-results-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.eligibility-results-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.eligibility-results-content {
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.eligibility-results-content.fee-for-service {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.eligibility-status {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  min-height: 1.5rem;
+}
+
+.eligibility-status.loading {
+  color: var(--accent);
+}
+
+.eligibility-status.error {
+  color: #dc2626;
+}
+
+.eligibility-results-content .error {
+  color: #dc2626;
+}
+
+.eligibility-fallback-msg {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.btn-active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: var(--header-text) !important;
+}
+
+.view-eligibility .profiles-view {
+  display: none;
+}
+
+.view-eligibility.view-profiles .eligibility-view,
+.view-eligibility.view-profiles .chat-container {
+  display: none;
+}
+
+.view-eligibility.view-profiles .profiles-view {
+  display: block;
+}
+
+.view-eligibility.view-chat-only .eligibility-view {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-field {
+    min-width: 0;
+  }
+
+  .form-actions .btn,
+  .eligibility-form button {
+    touch-action: manipulation;
+  }
+
+  .view-eligibility {
+    padding: 0.75rem;
+    min-width: 0;
+  }
+
+  .eligibility-form-card,
+  .eligibility-results-card {
+    padding: 1rem;
+  }
+
+  .totp-floating-card {
+    position: relative;
+    top: 0;
+    right: 0;
+    min-width: 0;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Phone detection: cellular devices */
+@media (max-width: 480px) {
+  .view-eligibility {
+    padding: 0.5rem;
+  }
+
+  .eligibility-form-card,
+  .eligibility-results-card {
+    padding: 0.75rem;
+  }
+
+  .eligibility-form-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 375px) {
+  .view-eligibility {
+    padding: 0.4rem;
+  }
+
+  .eligibility-form-card,
+  .eligibility-results-card {
+    padding: 0.6rem;
+  }
+}
