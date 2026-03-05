@@ -30,7 +30,13 @@ async function redirectByRole(user) {
     const targetUrl = isPublicDomain ? '/admin' : (BASE ? BASE + '/admin' : 'http://' + host + ':9900/admin');
     // Verify backend accepts our session before redirecting (avoids redirect loop when session stores differ)
     const adminConfigUrl = isPublicDomain ? '/admin/api/config' : (isGitHubPages ? (window.KLOUDY_API_BASE || '') + '/admin/api/config' : (BASE ? BASE + '/admin/api/config' : 'http://' + host + ':9900/admin/api/config'));
+    // #region agent log
+    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:beforeAdminConfigFetch',message:'Before adminConfig fetch',data:{adminConfigUrl},hypothesisId:'H1,H4',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const configRes = await fetchWithCreds(adminConfigUrl);
+    // #region agent log
+    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:adminConfigResponse',message:'Admin config response',data:{status:configRes?.status,ok:configRes?.ok,statusText:configRes?.statusText},hypothesisId:'H1,H2',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!configRes.ok) {
       await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });
       window.location.href = LOGIN_URL;
@@ -84,6 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const errEl = document.getElementById('login-error');
       errEl.textContent = '';
       btn.disabled = true;
+      // #region agent log
+      fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:loginSubmit',message:'Login submit start',data:{apiBase:API},hypothesisId:'H3',timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       try {
         const res = await fetchWithCreds(`${API}/auth/login`, {
           method: 'POST',
@@ -93,6 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
             password: document.getElementById('login-password').value,
           }),
         });
+        // #region agent log
+        fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:loginResponse',message:'Login response',data:{status:res.status,ok:res.ok,statusText:res.statusText},hypothesisId:'H1,H3',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
         if (data.require_totp && data.temp_token) {
@@ -101,8 +113,14 @@ document.addEventListener('DOMContentLoaded', () => {
           window._totpTempToken = data.temp_token;
           return;
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:beforeRedirectByRole',message:'Before redirectByRole',data:{userRole:data.user?.role,adminApproved:data.user?.admin_approved},hypothesisId:'H4',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         await redirectByRole(data.user);
       } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:loginCatch',message:'Login catch',data:{errMsg:err?.message,errName:err?.name},hypothesisId:'H1,H2,H3',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         errEl.textContent = err.message;
       } finally {
         btn.disabled = false;
