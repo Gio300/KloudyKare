@@ -20,40 +20,46 @@ async function checkAuth() {
 
 async function redirectByRole(user) {
   if (!user) {
-    window.location.href = '/';
+    redirectToLogin();
     return;
   }
   const role = user.role || 'client';
   const adminApproved = user.admin_approved === 1 || user.admin_approved === true;
+  const basePath = (window.KLOUDY_BASE_PATH || '').replace(/\/$/, '');
   if (role === 'admin' && adminApproved) {
     const host = window.location.hostname;
+    const isGitHubPages = host.includes('github.io') || basePath;
     const isPublicDomain = host === 'kloudykare.com' || host === 'www.kloudykare.com';
-    const targetUrl = isPublicDomain ? '/admin' : `http://${host}:9900/admin`;
-    // Verify backend accepts our session before redirecting (avoids redirect loop when session stores differ)
-    const adminConfigUrl = isPublicDomain ? '/admin/api/config' : `http://${host}:9900/admin/api/config`;
+    const targetUrl = isGitHubPages ? (window.location.origin + (basePath ? basePath + '/' : '') + 'admin/') : (isPublicDomain ? '/admin' : `http://${host}:9900/admin`);
+    const adminConfigUrl = isGitHubPages ? ((window.KLOUDY_API_BASE || '') + '/admin/api/config') : (isPublicDomain ? '/admin/api/config' : `http://${host}:9900/admin/api/config`);
     const configRes = await fetchWithCreds(adminConfigUrl);
     if (!configRes.ok) {
       await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });
-      window.location.href = '/';
+      redirectToLogin();
       return;
     }
 window.location.href = targetUrl;
     return;
   }
   if (role === 'admin' && !adminApproved) {
-    window.location.href = '/chat.html?message=pending_admin';
+    const chatPath = basePath ? basePath + '/chat.html?message=pending_admin' : '/chat.html?message=pending_admin';
+    window.location.href = basePath ? (window.location.origin + chatPath) : chatPath;
     return;
   }
-  window.location.href = '/chat.html';
+  const chatPath = basePath ? basePath + '/chat.html' : '/chat.html';
+  window.location.href = basePath ? (window.location.origin + chatPath) : chatPath;
 }
 
 function redirectToLogin() {
-  window.location.href = '/';
+  const base = (window.KLOUDY_BASE_PATH || window.KLOUDY_LOGIN_URL || '/KloudyKare').replace(/\/$/, '') + '/';
+  window.location.href = base.startsWith('http') ? base : (window.location.origin + base);
 }
 
 async function initAuth() {
   const user = await checkAuth();
-  const isLoginPage = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
+  const p = window.location.pathname.replace(/\/$/, '') || '/';
+  const base = (window.KLOUDY_BASE_PATH || '/KloudyKare').replace(/\/$/, '');
+  const isLoginPage = p === '/' || p === base || window.location.pathname.endsWith('index.html');
 if (user && isLoginPage) {
     await redirectByRole(user);
     return;
