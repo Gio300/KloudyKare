@@ -41,11 +41,15 @@ async function redirectByRole(user) {
     const isPublicDomain = host === 'kloudykare.com' || host === 'www.kloudykare.com';
     const targetUrl = isGitHubPages ? (window.location.origin + (basePath ? basePath + '/' : '') + 'admin/') : (isPublicDomain ? '/admin' : `http://${host}:9900/admin`);
     const adminConfigUrl = isGitHubPages ? ((window.KLOUDY_API_BASE || '') + '/admin/api/config') : (isPublicDomain ? '/admin/api/config' : `http://${host}:9900/admin/api/config`);
-    const configRes = await fetchWithCreds(adminConfigUrl);
-    if (!configRes.ok) {
-      await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });
-      redirectToLogin();
-      return;
+    try {
+      const configRes = await fetchWithCreds(adminConfigUrl);
+      if (!configRes.ok) {
+        await fetchWithCreds(`${API}/auth/logout`, { method: 'POST' });
+        redirectToLogin();
+        return;
+      }
+    } catch (err) {
+      // Admin config fetch failed (CORS, network, etc.) - redirect anyway; admin page will handle auth
     }
     // #region agent log
     fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:redirectByRole',message:'Admin redirect',data:{host,targetUrl,userId:user?.id},hypothesisId:'H4',timestamp:Date.now()})}).catch(()=>{});
