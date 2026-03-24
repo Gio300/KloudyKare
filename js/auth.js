@@ -1,19 +1,10 @@
 const API = (window.KLOUDY_API_BASE || '') + '/api';
 
 async function fetchWithCreds(url, opts = {}) {
-  // #region agent log
-  fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:fetchWithCreds',message:'Fetch start',data:{url,origin:location.origin},hypothesisId:'H1,H2',timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   try {
     const res = await fetch(url, { ...opts, credentials: 'include' });
-    // #region agent log
-    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:fetchWithCreds',message:'Fetch response',data:{url,status:res.status,ok:res.ok,statusText:res.statusText},hypothesisId:'H1,H3',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     return res;
   } catch (err) {
-    // #region agent log
-    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:fetchWithCreds',message:'Fetch threw',data:{url,error:err?.message||String(err)},hypothesisId:'H2',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     throw err;
   }
 }
@@ -51,9 +42,6 @@ async function redirectByRole(user) {
     } catch (err) {
       // Admin config fetch failed (CORS, network, etc.) - redirect anyway; admin page will handle auth
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:redirectByRole',message:'Admin redirect',data:{host,targetUrl,userId:user?.id},hypothesisId:'H4',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     window.location.href = targetUrl;
     return;
   }
@@ -78,12 +66,6 @@ async function initAuth() {
   const pathNorm = path.replace(/\/$/, '') || '/';
   // Login page: /KloudyKare, /KloudyKare/, or .../index.html. Exclude bare '/' (site root = 404 on GitHub Pages)
   const isLoginPage = (pathNorm === base || path === base + '/') || path.endsWith('index.html');
-  // #region agent log
-  (function() {
-    const payload = { sessionId: '1ffda1', hypothesisId: 'H3,H4', location: 'auth.js:initAuth', message: 'initAuth', data: { hasUser: !!user, userId: user?.id, role: user?.role, pathname: window.location.pathname, isLoginPage }, timestamp: Date.now() };
-    fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '1ffda1' }, body: JSON.stringify(payload) }).catch(function() {});
-  })();
-  // #endregion
   if (user && isLoginPage) {
     await redirectByRole(user);
     return;
@@ -106,9 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
       errEl.textContent = '';
       btn.disabled = true;
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:login-submit',message:'Login submit start',data:{apiBase:window.KLOUDY_API_BASE,loginUrl:(API||'')+'/auth/login'},hypothesisId:'H1,H5',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         const res = await fetchWithCreds(`${API}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -118,9 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }),
         });
         const data = await res.json();
-        // #region agent log
-        fetch('http://127.0.0.1:7314/ingest/59c2767c-dbc2-4c1b-a071-68d6be99d2ca',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1ffda1'},body:JSON.stringify({sessionId:'1ffda1',location:'auth.js:login-response',message:'Login response',data:{ok:res.ok,status:res.status,error:data?.error,require_totp:data?.require_totp,hasUser:!!data?.user},hypothesisId:'H2,H3,H4',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (!res.ok) throw new Error(data.error || 'Login failed');
         if (data.require_totp && data.temp_token) {
           loginForm.classList.add('hidden');
